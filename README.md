@@ -1,2 +1,2 @@
 # MDT
-Some functions related to asc files to x y xz format
+Some functions related to asc files to transform x y z format
