@@ -7,7 +7,7 @@ Created on Sat Apr 17 13:08:17 2021
 from math import modf
 import numpy as np
 import os
-from os.path import join
+from os.path import join, splitext
 # import littleLogging as logging
 
 
@@ -113,42 +113,17 @@ class MDT_asc():
             else:
                 ni = round(n_icell + 1)
 
-
-
-print(f'ni = {ni}, nj = {nj}')
-print(f'i = {nrows - ni}, j = {nj - 1}')
-
-
-
-def vertex_get(filename):
-    """
-    Gets the vertex of standar asz file
-    Parameters
-    ----------
-    filename : str
-        name of the asc file (input)
-    Returns
-    -------
-        tuple with 2 elements (xmin, ymin), (xmax, ymax) of the asc
-        filename
-    """
-    keys = {'ncols': 0, 'nrows': 0, 'xllcenter': 0, 'yllcenter': 0,
-            'cellsize': 0, 'nodata_value': 0}
-    with open(filename, 'r') as fi:
-        for i, line in enumerate(fi):
-            if i<len(keys):
-                a, n = line.split(' ')
-                keys[a.lower()] = int(n)
-                continue
-            if i == len(keys):
-                xmin = keys['xllcenter']
-                ymax = ((keys['nrows'] -1) * keys['cellsize']) + \
-                keys['yllcenter']
-                xmax = ((keys['ncols'] -1) * keys['cellsize']) + \
-                keys['xllcenter']
-                ymin = keys['yllcenter']
-            break
-    return ((xmin, ymin), (xmax, ymax))
+            i = self.keys['nrows'] - ni
+            j = nj - 1
+            if i < 0:
+                i = 0
+            elif i > self.keys['nrows'] - 1:
+                i = self.keys['nrows'] - 1
+            if j < 0:
+                j = 0
+            elif j > self.keys['ncols'] - 1:
+                j = self.keys['ncols'] - 1
+            return self.Z[i, j]
 
 
 def asc2xys_many_files(filenames, dir_input):
@@ -170,62 +145,56 @@ def asc2xys_many_files(filenames, dir_input):
         asc2xy(join(dir_input, filen1), join(dir_input, fileout))
 
 
-def asc2xy(filename, fileout) -> None:
-    """
-    changes the format of the file filename from standar asc to a new csv file
-        fileout with format:
-        "x","y","z"
-        x1,y1,z1
-        ...
-        xn,yn,zn
-    Parameters
-    filename : Lit(str)
-        name of the asc file (input)
-    fileout : str
-        name of the csv file (output)
-
-    """
-    keys = {'ncols': 0, 'nrows': 0, 'xllcenter': 0, 'yllcenter': 0,
-            'cellsize': 0, 'nodata_value': 0}
-    with open(filename, 'r') as fi, open(fileout, 'w') as fo:
-        fo.write('"x","y","z"\n')
-        for i, line in enumerate(fi):
-            if i<len(keys):
-                a, n = line.split(' ')
-                keys[a.lower()] = int(n)
-                continue
-            if i == len(keys):
-                xmin = keys['xllcenter']
-                ymax = ((keys['nrows'] -1) * keys['cellsize']) + \
-                keys['yllcenter']
+    def asc2xy(self) -> None:
+        """
+        changes the format of the file filename from standar asc
+        to a new csv file fileout with format:
+            "x","y","z"
+            x1,y1,z1
+            ...
+            xn,yn,zn
+        """
+        name, ext = splitext(self.filename)
+        fileout = name + '.csv'
+        with open(fileout, 'w') as fo:
+            fo.write('"x","y","z"\n')
+            for i in self.Z.shape[0]:
+                for j in self.Z.shape[1]:
+                    if w1.strip() != keys['nodata_value']:
+                        fo.write(f'{x},{y},{w1}\n')
+                    x += keys['cellsize']
                 x = xmin
-                y = ymax
-            words = line.strip().split(' ')
-            for w1 in words:
-                if w1.strip() != keys['nodata_value']:
-                    fo.write(f'{x},{y},{w1}\n')
-                x += keys['cellsize']
-            x = xmin
-            y -= keys['cellsize']
+                y -= keys['cellsize']
 
 
-def xy_in_file():
-    pass
-
-
-
-
-def get_z(ascfile, xy):
-    """
-    returns the z value given a list of x, y coordinates
-    Parameters
-    ----------
-    ascfile : str
-        name of the asc file
-    xy : List([float, float)
-        list of coordinates as [x1, y1], [x2, y2]...
-    Returns
-    z : list of z values; len(z) = len(x, y)
-    """
+# def vertex_get(filename):
+#     """
+#     Gets the vertex of standar asz file
+#     Parameters
+#     ----------
+#     filename : str
+#         name of the asc file (input)
+#     Returns
+#     -------
+#         tuple with 2 elements (xmin, ymin), (xmax, ymax) of the asc
+#         filename
+#     """
+#     keys = {'ncols': 0, 'nrows': 0, 'xllcenter': 0, 'yllcenter': 0,
+#             'cellsize': 0, 'nodata_value': 0}
+#     with open(filename, 'r') as fi:
+#         for i, line in enumerate(fi):
+#             if i<len(keys):
+#                 a, n = line.split(' ')
+#                 keys[a.lower()] = int(n)
+#                 continue
+#             if i == len(keys):
+#                 xmin = keys['xllcenter']
+#                 ymax = ((keys['nrows'] -1) * keys['cellsize']) + \
+#                 keys['yllcenter']
+#                 xmax = ((keys['ncols'] -1) * keys['cellsize']) + \
+#                 keys['xllcenter']
+#                 ymin = keys['yllcenter']
+#             break
+#     return ((xmin, ymin), (xmax, ymax))
 
 
