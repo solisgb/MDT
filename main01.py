@@ -9,7 +9,7 @@ from time import time
 import traceback
 
 import littleLogging as logging
-import asc2xy as axy
+import mdt_asc as mdt
 
 dir_input = r'E:\layers\IGN\MDT'
 filenames = ('PNOA_MDT05_ETRS89_HU30_0934_LID.asc',
@@ -24,7 +24,9 @@ if __name__ == "__main__":
     try:
         startTime = time()
 
-        axy.asc2xys_many_files(filenames, dir_input)
+        grd = mdt.MDT_asc(dir_input, filenames[0])
+
+        #axy.asc2xys_many_files(filenames, dir_input)
 
         #axy.asc2xy(filename, fileout)
 
