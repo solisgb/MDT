@@ -19,14 +19,20 @@ filenames = ('PNOA_MDT05_ETRS89_HU30_0934_LID.asc',
              'PNOA_MDT05_ETRS89_HU30_0956_LID.asc',
              'PNOA_MDT05_ETRS89_HU30_0977_LID.asc')
 
+points = [[659078, 4188818], [659078, 4188822], [659082, 4188818], [659082, 4188822]]
+
+
 if __name__ == "__main__":
 
     try:
         startTime = time()
 
         grd = mdt.MDT_asc(dir_input, filenames[0])
+        # z = grd.z_get(points)
+        # for z1 in z:
+        #     print(z1)
 
-        #axy.asc2xys_many_files(filenames, dir_input)
+        grd.asc2csv()
 
         #axy.asc2xy(filename, fileout)
 

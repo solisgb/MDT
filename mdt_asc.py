@@ -6,9 +6,8 @@ Created on Sat Apr 17 13:08:17 2021
 """
 from math import modf
 import numpy as np
-import os
 from os.path import join, splitext
-# import littleLogging as logging
+import littleLogging as logging
 
 
 class MDT_asc():
@@ -36,7 +35,6 @@ class MDT_asc():
         self.filename = join(dir_input, filename)
         with open(self.filename, 'r') as fi:
             for i, line in enumerate(fi):
-                print(i)
                 if i<len(self.keys):
                     a, n = line.split(' ')
                     self.keys[a.lower()] = int(n)
@@ -90,31 +88,27 @@ class MDT_asc():
         xy : List([float, float)
             list of coordinates as [x1, y1], [x2, y2]...
         Returns
-        z : list of z values; len(z) = len(x, y)
+        z : List(List)), each element: ii, x1, y1, z1
         """
-        for xy1 in xy:
+        z = []
+        delta = delta = self.keys['cellsize'] / 2
+        for ii, xy1 in enumerate(xy):
             if not self.point_in_grid(xy1[0], xy1[1]):
-                return self.keys['nodata_value']
+                msg = f'{xy1[0]} {xy1[1]} no está en\n{self.filename}'
+                logging.append(msg)
+                continue
+
             x1 = xy1[0]
             y1 = xy1[1]
-            jcell = x1/self.keys['cellsize']
-            icell = y1/self.keys['cellsize']
+            xmin1 = self.xmin - delta
+            # xmax1 = self.xmax + delta
+            ymin1 = self.ymin - delta
+            # ymax1 = self.ymax + delta
+            xi = ((y1 - ymin1) * self.ncols) / (self.ymax - self.ymin)
+            xj = ((x1 - xmin1) * self.nrows) / (self.xmax - self.xmin)
+            i = self.nrows - int(xi)
+            j = int(xj)
 
-            d_jcell, n_jcell = modf(jcell)
-            d_icell, n_icell = modf(icell)
-
-            if d_jcell <= 0.5:
-                nj = round(n_jcell)
-            else:
-                nj = round(n_jcell + 1)
-
-            if d_icell <= 0.5:
-                ni = round(n_icell)
-            else:
-                ni = round(n_icell + 1)
-
-            i = self.keys['nrows'] - ni
-            j = nj - 1
             if i < 0:
                 i = 0
             elif i > self.keys['nrows'] - 1:
@@ -123,32 +117,30 @@ class MDT_asc():
                 j = 0
             elif j > self.keys['ncols'] - 1:
                 j = self.keys['ncols'] - 1
-            return self.Z[i, j]
+            z.append([ii, x1, y1, i, j, self.Z[i, j]])
+        return z
 
 
-def asc2xys_many_files(filenames, dir_input):
-    """
-    Calls asc2xy for a list of filenames
-    Parameters
-    ----------
-    filenames : List(str)
-        list of names of files in asc forst to be transformed to csv format
-    dir_input : directory of filenames
-    Returns
-    -------
-    None.
-    """
-    for i, filen1 in enumerate(filenames):
-        print(i)
-        fname, fext = os.path.splitext(filen1)
-        fileout = f'{fname}.csv'
-        asc2xy(join(dir_input, filen1), join(dir_input, fileout))
-
-
-    def asc2xy(self) -> None:
+    @staticmethod
+    def asc2xys_many_files(filenames):
         """
-        changes the format of the file filename from standar asc
-        to a new csv file fileout with format:
+        Calls asc2xy for a list of instances MDT_asc
+        Parameters
+        ----------
+        filenames : List(MDT_asc)
+            list of instances MDT_asc to be written as csv format
+        Returns
+        -------
+        None.
+        """
+        for i, filen1 in enumerate(filenames):
+            print(i)
+            filen1.asc2xy()
+
+
+    def asc2csv(self) -> None:
+        """
+        writes self as new csv file -fileout- with format:
             "x","y","z"
             x1,y1,z1
             ...
@@ -158,13 +150,15 @@ def asc2xys_many_files(filenames, dir_input):
         fileout = name + '.csv'
         with open(fileout, 'w') as fo:
             fo.write('"x","y","z"\n')
-            for i in self.Z.shape[0]:
-                for j in self.Z.shape[1]:
-                    if w1.strip() != keys['nodata_value']:
-                        fo.write(f'{x},{y},{w1}\n')
-                    x += keys['cellsize']
-                x = xmin
-                y -= keys['cellsize']
+            x = self.xmin
+            y = self.ymax
+            for i in range(self.Z.shape[0]):
+                for j in range(self.Z.shape[1]):
+                    if self.Z[i, j].strip() != self.keys['nodata_value']:
+                        fo.write(f'{x},{y},{self.Z[i, j]}\n')
+                    x += self.keys['cellsize']
+                x = self.xmin
+                y -= self.keys['cellsize']
 
 
 # def vertex_get(filename):
