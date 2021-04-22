@@ -28,11 +28,11 @@ if __name__ == "__main__":
         startTime = time()
 
         grd = mdt.MDT_asc(dir_input, filenames[0])
-        # z = grd.z_get(points)
-        # for z1 in z:
-        #     print(z1)
+        z = grd.z_get(points)
+        for z1 in z:
+            print(z1)
 
-        grd.asc2csv()
+        # grd.asc2csv()
 
         #axy.asc2xy(filename, fileout)
 
