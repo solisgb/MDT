@@ -75,7 +75,7 @@ class MDT_asc():
         xmax = self.xmax + delta
         ymin = self.ymin - delta
         ymax = self.ymax + delta
-        if xmin < x1 and x1 < xmax and ymin < y1 and y1 < ymax:
+        if xmin <= x1 and x1 <= xmax and ymin <= y1 and y1 <= ymax:
             return True
         else:
             return False
@@ -92,33 +92,29 @@ class MDT_asc():
         z : List(List)), each element: ii, x1, y1, z1
         """
         z = []
-        delta = delta = self.keys['cellsize'] / 2
         tiny = 0.1
         for ii, xy1 in enumerate(xy):
             if not self.point_in_grid(xy1[0], xy1[1]):
-                msg = f'{xy1[0]} {xy1[1]} no está en\n{self.filename}'
+                msg = f'{ii} {xy1[0]} {xy1[1]} NO está en {self.filename}'
                 logging.append(msg)
                 continue
 
             x1 = xy1[0]
             y1 = xy1[1]
 
-            if x1 >= self.xmax + delta:
+            if x1 >= self.xmax:
                 x1 = self.xmax - tiny
-            if y1 >= self.ymax + delta:
+            if y1 >= self.ymax:
                 y1 = self.ymax - tiny
-            if x1 <= self.xmin - delta:
-                x1 = self.xmin + tiny
-            if y1 <= self.ymin - delta:
-                y1 = self.ymin + tiny
+            if x1 <= self.xmin:
+                x1 = self.xmin
+            if y1 <= self.ymin:
+                y1 = self.ymin
 
-            xmin1 = self.xmin - delta
-            xmax1 = self.xmax + delta
-            ymin1 = self.ymin - delta
-            ymax1 = self.ymax + delta
-
-            xi = ((y1 - ymin1) * self.keys['nrows']) / (self.ymax - self.ymin)
-            xj = ((x1 - xmin1) * self.keys['ncols']) / (self.xmax - self.xmin)
+            xi = ((y1 - self.ymin) * self.keys['nrows']) / (self.ymax -
+                                                            self.ymin)
+            xj = ((x1 - self.xmin) * self.keys['ncols']) / (self.xmax -
+                                                            self.xmin)
 
             i = self.keys['nrows'] - int(xi) - 1
             j = int(xj)
