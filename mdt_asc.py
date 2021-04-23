@@ -4,7 +4,6 @@ Created on Sat Apr 17 13:08:17 2021
 
 @author: solis
 """
-from math import modf
 import numpy as np
 from os.path import join, splitext
 import littleLogging as logging
@@ -96,7 +95,7 @@ class MDT_asc():
         for ii, xy1 in enumerate(xy):
             if not self.point_in_grid(xy1[0], xy1[1]):
                 msg = f'{ii} {xy1[0]} {xy1[1]} NO está en {self.filename}'
-                logging.append(msg)
+                logging.append(msg, False)
                 continue
 
             x1 = xy1[0]
@@ -119,7 +118,7 @@ class MDT_asc():
             i = self.keys['nrows'] - int(xi) - 1
             j = int(xj)
 
-            z.append([ii, x1, y1, i, j, self.Z[i, j]])
+            z.append([ii, self.Z[i, j]])
         return z
 
 
