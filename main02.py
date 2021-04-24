@@ -31,21 +31,24 @@ if __name__ == "__main__":
     try:
         startTime = time()
 
-        points = pd.read_csv(filepoints, index_col=0, dtype=dtypes)
-        points = []
-        with open(filepoints, 'r') as f:
-            for i, line in enumerate(f):
-                if i == 0:
-                    continue
-                ws = line.strip().split(',')
-                points.append(ws)
-            points = np.array(points)
-            xy = points[:, [1,2]].astype(np.float32)
+        dfp = pd.read_csv(filepoints, dtype=dtypes)
+        dfp['z'] = np.nan
+        dfp['file'] = ''
+        xys = [[row.x, row.y] for index, row in dfp.iterrows()]
 
         for fn in filenames:
             grd = mdt.MDT_asc(dir_input, fn)
-            zs = grd.z_get(xy)
-            i = 0
+            zs = grd.z_get(xys)
+            for z1 in zs:
+                dfp.at[z1[0], 'z'] = z1[-1]
+                dfp.at[z1[0], 'file'] = fn
+            dfp2 = dfp.loc[dfp['z'] == np.NaN]
+            xys = [[row.x, row.y] for index, row in dfp2.iterrows()]
+        if len(dfp2.index) > 0:
+            msg = f'there are {len(dfp2.index)} points without assigned z'
+            logging.append(msg)
+            msg = dfp2.to_string()
+            print(msg)
 
     except ValueError:
         msg = traceback.format_exc()

@@ -6,12 +6,19 @@ Created on Sat Apr 17 13:08:17 2021
 """
 import numpy as np
 from os.path import join, splitext
+import pandas as pd
 import littleLogging as logging
 
 
 class MDT_asc():
     """
-    Operation between an mdt with asc format an points
+    This module does 2 operations:
+    1) Assign z values to a set of points fiven a set of asc files
+    2) Changes the format of a set of asc files to a csv format:
+        "x","y","z"
+        x1,y1,z1
+        ...
+        xn,yn,zn
     """
 
     keys = {'ncols': 0, 'nrows': 0, 'xllcenter': 0, 'yllcenter': 0,
@@ -162,34 +169,47 @@ class MDT_asc():
                 y -= self.keys['cellsize']
 
 
-# def vertex_get(filename):
-#     """
-#     Gets the vertex of standar asz file
-#     Parameters
-#     ----------
-#     filename : str
-#         name of the asc file (input)
-#     Returns
-#     -------
-#         tuple with 2 elements (xmin, ymin), (xmax, ymax) of the asc
-#         filename
-#     """
-#     keys = {'ncols': 0, 'nrows': 0, 'xllcenter': 0, 'yllcenter': 0,
-#             'cellsize': 0, 'nodata_value': 0}
-#     with open(filename, 'r') as fi:
-#         for i, line in enumerate(fi):
-#             if i<len(keys):
-#                 a, n = line.split(' ')
-#                 keys[a.lower()] = int(n)
-#                 continue
-#             if i == len(keys):
-#                 xmin = keys['xllcenter']
-#                 ymax = ((keys['nrows'] -1) * keys['cellsize']) + \
-#                 keys['yllcenter']
-#                 xmax = ((keys['ncols'] -1) * keys['cellsize']) + \
-#                 keys['xllcenter']
-#                 ymin = keys['yllcenter']
-#             break
-#     return ((xmin, ymin), (xmax, ymax))
+def get_z_drv(filepoints, dir_asc_files, filenames, dtypes):
+    """
+    driver to assign its z value to a set of points in filepoints
+    Parameters
+    ----------
+    filepoints : str
+        csv file with the following structure
+        "gid","x","y"
+        gid1 (int), x1 (float), y1 (float)
+        ...
+        gidn, xn, yn
+    dir_asc_files : str
+        directory where filenames are found
+    filenames : List(str)
+        list in wich each element is the name of a standar asc file
+    dtypes : Dictionary with 3 elements,
+        {'gid': type, 'x': type, 'y': type}, examples:
+        dtypes = {'gid': 'int32', 'x': 'float32', 'y': 'float32'}
+        dtypes = {'gid': 'str', 'x': 'float32', 'y': 'float32'}
+        dtypes = {'gid': 'int32', 'x': 'float64', 'y': 'float64'}
+    Returns
+    -------
+    None.
+    """
+    dfp = pd.read_csv(filepoints, dtype=dtypes)
+    dfp['z'] = np.nan
+    dfp['file'] = ''
+    xys = [[row.x, row.y] for index, row in dfp.iterrows()]
+
+    for fn in filenames:
+        grd = MDT_asc(dir_asc_files, fn)
+        zs = grd.z_get(xys)
+        for z1 in zs:
+            dfp.at[z1[0], 'z'] = z1[-1]
+            dfp.at[z1[0], 'file'] = fn
+        dfp2 = dfp.loc[dfp['z'] == np.NaN]
+        xys = [[row.x, row.y] for index, row in dfp2.iterrows()]
+    if len(dfp2.index) > 0:
+        msg = f'there are {len(dfp2.index)} points without assigned z'
+        logging.append(msg)
+        msg = dfp2.to_string()
+        print(msg)
 
 
