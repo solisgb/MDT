@@ -17,7 +17,8 @@ filenames = ('PNOA_MDT05_ETRS89_HU30_0934_LID.asc',
              'PNOA_MDT05_ETRS89_HU30_0954_LID.asc',
              'PNOA_MDT05_ETRS89_HU30_0955_LID.asc',
              'PNOA_MDT05_ETRS89_HU30_0956_LID.asc',
-             'PNOA_MDT05_ETRS89_HU30_0977_LID.asc')
+             'PNOA_MDT05_ETRS89_HU30_0977_LID.asc',
+             'PNOA_MDT05_ETRS89_HU30_0978_LID.asc')
 
 points = [[659082, 4188822],
  [659078, 4188818],

@@ -5,7 +5,8 @@ Created on Sat Apr 17 13:08:17 2021
 @author: solis
 """
 import numpy as np
-from os.path import join, splitext
+
+from os.path import join, splitext, basename, dirname
 import pandas as pd
 import littleLogging as logging
 
@@ -92,21 +93,22 @@ class MDT_asc():
         returns the z value given a list of x, y coordinates
         Parameters
         ----------
-        xy : List([float, float)
-            list of coordinates as [x1, y1], [x2, y2]...
+        xy : List([int-str, float, float)
+            list of coordinates as [gid1, x1, y1], [gid2, x2, y2]...
         Returns
-        z : List(List)), each element: ii, x1, y1, z1
+        z : List(List)), each element: gid, x1, y1, z1
         """
         z = []
         tiny = 0.1
         for ii, xy1 in enumerate(xy):
-            if not self.point_in_grid(xy1[0], xy1[1]):
-                msg = f'{ii} {xy1[0]} {xy1[1]} NO está en {self.filename}'
+            gid = xy1[0]
+            x1 = xy1[1]
+            y1 = xy1[2]
+
+            if not self.point_in_grid(x1, y1):
+                msg = f'{gid} {x1} {y1} NO está en {self.filename}'
                 logging.append(msg, False)
                 continue
-
-            x1 = xy1[0]
-            y1 = xy1[1]
 
             if x1 >= self.xmax:
                 x1 = self.xmax - tiny
@@ -125,7 +127,7 @@ class MDT_asc():
             i = self.keys['nrows'] - int(xi) - 1
             j = int(xj)
 
-            z.append([ii, self.Z[i, j]])
+            z.append([gid, self.Z[i, j]])
         return z
 
 
@@ -169,7 +171,7 @@ class MDT_asc():
                 y -= self.keys['cellsize']
 
 
-def get_z_drv(filepoints, dir_asc_files, filenames, dtypes):
+def get_z_drv(filepoints, dtypes, dir_asc_files, filenames, output_file):
     """
     driver to assign its z value to a set of points in filepoints
     Parameters
@@ -177,39 +179,51 @@ def get_z_drv(filepoints, dir_asc_files, filenames, dtypes):
     filepoints : str
         csv file with the following structure
         "gid","x","y"
-        gid1 (int), x1 (float), y1 (float)
+        gid1 (int or str), x1 (float), y1 (float)
         ...
         gidn, xn, yn
-    dir_asc_files : str
-        directory where filenames are found
-    filenames : List(str)
-        list in wich each element is the name of a standar asc file
     dtypes : Dictionary with 3 elements,
         {'gid': type, 'x': type, 'y': type}, examples:
         dtypes = {'gid': 'int32', 'x': 'float32', 'y': 'float32'}
         dtypes = {'gid': 'str', 'x': 'float32', 'y': 'float32'}
         dtypes = {'gid': 'int32', 'x': 'float64', 'y': 'float64'}
+    dir_asc_files : str
+        directory where filenames are found
+    filenames : List(str)
+        list in wich each element is the name of a standar asc file
+    output_file : Path to a csv fil with the results of computations
     Returns
     -------
-    None.
+    dfp : pandas dataframe
+        dateframe with data and z values
     """
     dfp = pd.read_csv(filepoints, dtype=dtypes)
     dfp['z'] = np.nan
     dfp['file'] = ''
-    xys = [[row.x, row.y] for index, row in dfp.iterrows()]
+    xys = [[row.gid, row.x, row.y] for _, row in dfp.iterrows()]
 
     for fn in filenames:
         grd = MDT_asc(dir_asc_files, fn)
         zs = grd.z_get(xys)
         for z1 in zs:
-            dfp.at[z1[0], 'z'] = z1[-1]
-            dfp.at[z1[0], 'file'] = fn
-        dfp2 = dfp.loc[dfp['z'] == np.NaN]
-        xys = [[row.x, row.y] for index, row in dfp2.iterrows()]
+            dfp.loc[dfp['gid'] == z1[0], 'z'] = z1[-1]
+            dfp.loc[dfp['gid'] == z1[0], 'file'] = fn
+        dfp2 = dfp.loc[dfp.z.isnull()]
+        xys = [[row.gid, row.x, row.y] for _, row in dfp2.iterrows()]
     if len(dfp2.index) > 0:
         msg = f'there are {len(dfp2.index)} points without assigned z'
         logging.append(msg)
         msg = dfp2.to_string()
         print(msg)
+    else:
+        msg = 'All points have been assigned'
+        logging.append(msg)
+    name = basename(output_file)
+    path = dirname(filepoints)
+    dfp.to_csv(join(path, name), sep=',', encoding='utf-8',
+               index=False)
+    msg = f'output file {join(path, name)}'
+    logging.append(msg)
+    return dfp
 
 
