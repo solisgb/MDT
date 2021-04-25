@@ -1,2 +1,4 @@
 # MDT
-Some functions related to asc files to transform x y z format
+Assigns z values to a set of point by reading asc files
+
+Changes the format from a asc file to a csv file (x, y, z)
